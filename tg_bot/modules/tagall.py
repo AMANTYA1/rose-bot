@@ -1,140 +1,118 @@
-import os, logging, asyncio
-
-from telegraph import upload_file
-
+import os
+import asyncio
 from telethon import Button
 from telethon import TelegramClient, events
-from telethon.sessions import StringSession
-from telethon.tl.types import ChannelParticipantsAdmins
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(name)s - [%(levelname)s] - %(message)s'
-)
-LOGGER = logging.getLogger(__name__)
-
-api_id = int(os.environ.get("APP_ID"))
-api_hash = os.environ.get("API_HASH")
-bot_token = os.environ.get("TOKEN")
-decodebot = TelegramClient('client', api_id, api_hash).start(bot_token=bot_token)
-
-moment_worker = []
+from telethon.tl.types import ChannelParticipantAdmin
+from telethon.tl.types import ChannelParticipantCreator
+from telethon.tl.functions.channels import GetParticipantRequest
+from telethon.errors import UserNotParticipantError
 
 
-#start
-@decodebot.on(events.NewMessage(pattern="^/vip$"))
-async def start(event):
-  await event.reply("^_^ Hey, Welcome To TAG Help Bot's Menu\nI can tag 15,000 Members in Group and 300 Members In Channel.\nNeed Help /help ",
-                    buttons=(
-                      [
-                         Button.url('📣 UPDATES', 'https://t.me/DeeCodeBots'), 
-                         Button.url('⭐SUPPORT', 'https://t.me/DeCodeSupport'), 
-                      ], 
-                      [
-                        Button.url('➕ ADD ME TO YOUR GROUP', 'https://t.me/MEMBER_TAGERBOT?startgroup=true'),   
-                      ]
-                   ), 
-                    link_preview=False
-                   )
+spam_chats = []
 
-#help
-@decodebot.on(events.NewMessage(pattern="^/sos$"))
-async def help(event):
-  helptext = "**Tag Help Bot's Help Menu**\n\nCommand: /all \n You can use this command with text you want to tell others. \n`Example: /all Good morning!` \nYou can use this command as an answer. any message Bot will tag users to replied message"
-  await event.reply(helptext,
-                    buttons=(
-                      [
-                         Button.url('📣 UPDATES', 'https://t.me/DeeCodeBots'), 
-                         Button.url('⭐SUPPORT', 'https://t.me/DeCodeSupport'), 
-                      ], 
-                      [
-                        Button.url('➕ ADD ME TO YOUR GROUP', 'https://t.me/MEMBER_TAGERBOT?startgroup=true'),   
-                      ]
-                   ), 
-                    link_preview=False
-                   )
-
-#Wah bhaiya full ignorebazzi
-
-#bsdk credit de dena verna maa chod dege
-
-#tag
-@decodebot.on(events.NewMessage(pattern="^/tagall|/call|/tall|/all|#all|@all?(.*)"))
+@client.on(events.NewMessage(pattern="^/tagall ?(.*)"))
+@client.on(events.NewMessage(pattern="^@all ?(.*)"))
 async def mentionall(event):
-  global moment_worker
+  chat_id = event.chat_id
   if event.is_private:
-    return await event.respond("Use This In Channel or Group!")
+    return await event.respond("__This command can be use in groups and channels!__")
   
-  admins = []
-  async for admin in decodebot.iter_participants(event.chat_id, filter=ChannelParticipantsAdmins):
-    admins.append(admin.id)
-  if not event.sender_id in admins:
-    return await event.respond("Only Admin can use it.")
+  is_admin = False
+  try:
+    partici_ = await client(GetParticipantRequest(
+      event.chat_id,
+      event.sender_id
+    ))
+  except UserNotParticipantError:
+    is_admin = False
+  else:
+    if (
+      isinstance(
+        partici_.participant,
+        (
+          ChannelParticipantAdmin,
+          ChannelParticipantCreator
+        )
+      )
+    ):
+      is_admin = True
+  if not is_admin:
+    return await event.respond("__Only admins can mention all!__")
   
-  if event.pattern_match.group(1):
+  if event.pattern_match.group(1) and event.is_reply:
+    return await event.respond("__Give me one argument!__")
+  elif event.pattern_match.group(1):
     mode = "text_on_cmd"
     msg = event.pattern_match.group(1)
-  elif event.reply_to_msg_id:
+  elif event.is_reply:
     mode = "text_on_reply"
-    msg = event.reply_to_msg_id
+    msg = await event.get_reply_message()
     if msg == None:
-        return await event.respond("I can't Mention Members for Old Post!")
-  elif event.pattern_match.group(1) and event.reply_to_msg_id:
-    return await event.respond("Give me can an Argument. Ex: `/tag Hey, Where are you`")
+        return await event.respond("__I can't mention members for older messages! (messages which are sent before I'm added to group)__")
   else:
-    return await event.respond("Reply to Message or Give Some Text To Mention!")
-    
-  if mode == "text_on_cmd":
-    moment_worker.append(event.chat_id)
-    usrnum = 0
-    usrtxt = ""
-    async for usr in decodebot.iter_participants(event.chat_id):
-      usrnum += 1
-      usrtxt += f"[{usr.first_name}](tg://user?id={usr.id}) "
-      if event.chat_id not in moment_worker:
-        await event.respond("Stopped!")
-        return
-      if usrnum == 5:
-        await decodebot.send_message(event.chat_id, f"{usrtxt}\n\n{msg}")
-        await asyncio.sleep(2)
-        usrnum = 0
-        usrtxt = ""
-        
+    return await event.respond("__Reply to a message or give me some text to mention others!__")
   
-  if mode == "text_on_reply":
-    moment_worker.append(event.chat_id)
- 
-    usrnum = 0
-    usrtxt = ""
-    async for usr in decodebot.iter_participants(event.chat_id):
-      usrnum += 1
-      usrtxt += f"[{usr.first_name}](tg://user?id={usr.id}) "
-      if event.chat_id not in moment_worker:
-        await event.respond("Stopped")
-        return
-      if usrnum == 5:
-        await decodebot.send_message(event.chat_id, usrtxt, reply_to=msg)
-        await asyncio.sleep(2)
-        usrnum = 0
-        usrtxt = ""
+  spam_chats.append(chat_id)
+  usrnum = 0
+  usrtxt = ''
+  async for usr in client.iter_participants(chat_id):
+    if not chat_id in spam_chats:
+      break
+    usrnum += 1
+    usrtxt += f"[{usr.first_name}](tg://user?id={usr.id}), "
+    if usrnum == 5:
+      if mode == "text_on_cmd":
+        txt = f"{msg}\n{usrtxt}"
+        await client.send_message(chat_id, txt)
+      elif mode == "text_on_reply":
+        await msg.reply(usrtxt)
+      await asyncio.sleep(2)
+      usrnum = 0
+      usrtxt = ''
+  try:
+    spam_chats.remove(chat_id)
+  except:
+    pass
 
-
-# Cancle 
-
-@decodebot.on(events.NewMessage(pattern="^/cancel$"))
+@client.on(events.NewMessage(pattern="^/cancel$"))
 async def cancel_spam(event):
   if not event.chat_id in spam_chats:
-    return await event.respond('__There is no proccess on going...__')
+    return await event.respond("__There is no proccess on going...__")
+  is_admin = False
+  try:
+    partici_ = await client(GetParticipantRequest(
+      event.chat_id,
+      event.sender_id
+    ))
+  except UserNotParticipantError:
+    is_admin = False
+  else:
+    if (
+      isinstance(
+        partici_.participant,
+        (
+          ChannelParticipantAdmin,
+          ChannelParticipantCreator
+        )
+      )
+    ):
+      is_admin = True
+  if not is_admin:
+    return await event.respond("__Only admins can execute this command!__")
+  
   else:
     try:
       spam_chats.remove(event.chat_id)
     except:
       pass
-    return await event.respond('**__Stoped__**\n\n**__Powered By:__ @TeamDeeCode**')
+    return await event.respond("__Stopped Mention.__")
 
 
+__mod_name__ = "Tagall"
+__help__ = """
 
+Only admins can tag all.  here is a list of commands
 
-print("Started Successfully Join Support")
-print("¯\_(ツ)_/¯ Need Help Join @DeCodeSupport")
-decodebot.run_until_disconnected()
+✨ /tagall or @all '(reply to message or add another message) To mention all members in your group, without exception.'
+
+"""
