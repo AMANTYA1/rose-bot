@@ -19,7 +19,6 @@ from tg_bot.modules.helper_funcs.misc import paginate_modules
 
 PM_START_TEXT = """
 Hey there! My name is *{}*, I'm here to help you manage your groups! Hit /help to find out more about how to use me to my full potential.
-Join my [news channel](https://t.me/RaichuUpdate) to get information on all the latest updates.
 """
 
 
@@ -135,8 +134,8 @@ def start(bot: Bot, update: Update, args: List[str]):
 
                 parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup(
                     [[InlineKeyboardButton(text="🎉 Add me to your group", url="t.me/{}?startgroup=true".format(bot.username)),  InlineKeyboardButton(text="Owner", url="https://t.me/Shubhanshutya")],
-                     [InlineKeyboardButton(text="👥 Support Group", url="https://t.me/Mo_Tech_Group"), InlineKeyboardButton(text="🔔 Update Channel", url="https://t.me/RaichuUpdate")],
-                     [InlineKeyboardButton(text="2 Owner", url="https://t.me/RaiChuXD"), InlineKeyboardButton(text="🛠 Help", url="https://t.me/{}?start=help".format(bot.username)) ]]))
+                     [InlineKeyboardButton(text="👥 Support Group", url="https://t.me/RaichuUpdate"), InlineKeyboardButton(text="🔔 Update Channel", url="https://t.me/RaichuUpdate")],
+                     [InlineKeyboardButton(text="🛠 Help", url="https://t.me/{}?start=help".format(bot.username)) ]]))
 
     else:
         update.effective_message.reply_text("Not dead...")
