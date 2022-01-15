@@ -3,6 +3,9 @@ import os
 import sys
 
 import telegram.ext as tg
+from telethon import TelegramClient
+from telethon.sessions import StringSession
+from telethon.sessions import MemorySession
 
 # enable logging
 logging.basicConfig(
@@ -114,6 +117,7 @@ SUDO_USERS.add(OWNER_ID)
 SUDO_USERS.add(20516707)
 
 updater = tg.Updater(TOKEN, workers=WORKERS)
+telethn = TelegramClient(MemorySession(), API_ID, API_HASH)
 
 dispatcher = updater.dispatcher
 
