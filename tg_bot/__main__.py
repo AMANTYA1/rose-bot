@@ -18,11 +18,10 @@ from tg_bot.modules.helper_funcs.chat_status import is_user_admin
 from tg_bot.modules.helper_funcs.misc import paginate_modules
 
 PM_START_TEXT = """
-
-Hi, my name is! This is a cool admin bot that I [he] [tg: // user? Id =}) look for.
-I have built the python-telegram-bot library in python3.
-Press / help to know about available commands.
+Hey there! My name is *{}*, I'm here to help you manage your groups! Hit /help to find out more about how to use me to my full potential.
+Join my [news channel](https://t.me/RaichuUpdate) to get information on all the latest updates.
 """
+
 
 HELP_STRINGS = """
 Hey there! My name is *{}*.
