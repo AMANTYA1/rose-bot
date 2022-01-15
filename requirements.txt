@@ -12,3 +12,5 @@ SQLAlchemy
 psycopg2
 pyromod
 telethon==1.22.0
+telegraph
+cryptg
